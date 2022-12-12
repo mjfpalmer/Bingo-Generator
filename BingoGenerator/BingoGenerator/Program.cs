@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Diagnostics;
+using System.Globalization;
 using OfficeOpenXml;
 
 Console.WriteLine("Bingo Generator v1.0");
@@ -6,9 +7,12 @@ Console.WriteLine();
 Console.Write("Enter the number of cards to generate: ");
 int cardCount = int.Parse(Console.ReadLine()!, NumberStyles.Integer, CultureInfo.InvariantCulture);
 
-string[] source = File.ReadAllLines("source.txt").Where(s => !string.IsNullOrEmpty(s)).ToArray();
+string[] source = File.ReadAllLines("source.txt").Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToHashSet().ToArray();
 List<int> sample = Enumerable.Range(0, source.Length).ToList();
 HashSet<string> cards = new HashSet<string>();
+
+Console.WriteLine();
+Console.Write("Randomising... ");
 
 Random random = new Random();
 while (cards.Count < cardCount)
@@ -20,6 +24,12 @@ while (cards.Count < cardCount)
   } while (cards.Contains(card));
   cards.Add(card);
 }
+
+Console.WriteLine("Done.");
+
+string outputFileName = $"Output{DateTime.Now.ToString("yyyyMMddHHmmss")}.xlsx";
+Console.WriteLine();
+Console.Write($"Writing {outputFileName}... ");
 
 using (ExcelPackage excelPackage = new ExcelPackage(new FileInfo("Output.xlsx")))
 {
@@ -49,8 +59,23 @@ using (ExcelPackage excelPackage = new ExcelPackage(new FileInfo("Output.xlsx"))
       i++;
     }
 
-    excelPackage.SaveAs(new FileInfo($"{Environment.CurrentDirectory}\\Output{DateTime.Now.ToString("yyyyMMddHHmmss")}.xlsx"));
+    excelPackage.SaveAs(new FileInfo(outputFileName));
   }
 }
 
 Console.WriteLine("Done.");
+
+Console.WriteLine();
+Console.Write($"Opening {outputFileName}... ");
+
+ProcessStartInfo startInfo = new ProcessStartInfo();
+startInfo.FileName = "EXCEL.EXE";
+startInfo.Arguments = outputFileName;
+startInfo.UseShellExecute = true;
+Process.Start(startInfo);
+
+Console.WriteLine("Done.");
+
+Console.WriteLine();
+Console.Write("Press Enter to exit.");
+Console.ReadLine();
